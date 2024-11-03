@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Gestión de Usuarios</title>
+    <link
+      rel="stylesheet"
+      href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
+    />
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="clienteRest.js"></script>
+  </head>
+  <body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-sm bg-dark navbar-dark">
+      <a class="navbar-brand" href="#">Gestión de Usuarios</a>
+      <ul class="navbar-nav">
+        <li class="nav-item"><a class="nav-link" href="#">Inicio</a></li>
+        <li class="nav-item"><a class="nav-link" href="#">Usuarios</a></li>
+        <li class="nav-item"><a class="nav-link" href="#">Configuración</a></li>
+      </ul>
+    </nav>
+
+    <!-- Main Container -->
+    <div class="container mt-4">
+      <h3>Gestión de Usuarios</h3>
+      <p>
+        Use esta página para agregar, ver y gestionar usuarios en el sistema.
+      </p>
+
+      <!-- Form to Add User -->
+      <div class="input-group mb-3">
+        <input
+          type="text"
+          id="nickInput"
+          class="form-control"
+          placeholder="Ingrese el nick de usuario"
+        />
+        <div class="input-group-append">
+          <button class="btn btn-primary" onclick="agregarUsuario()">
+            Agregar Usuario
+          </button>
+        </div>
+      </div>
+      <div class="mb-3">
+        <!-- <button class="btn btn-info" onclick="obtenerUsuarios()">
+          Obtener Usuarios
+        </button>--> 
+        <button class="btn btn-info" onclick="eliminarUsuario()">
+          Eliminar Usuario
+        </button>
+      </div>
+
+      <!-- Confirmation Message -->
+      <div id="message" class="text-success mb-3"></div>
+
+      <!-- User List Section -->
+      <div class="user-list mt-4">
+        <h4>Lista de Usuarios</h4>
+        <div id="userList" class="border p-3 bg-light"></div>
+      </div>
+
+      <!-- Total User Count Section -->
+      <div class="user-count mt-4">
+        <h4>Total de Usuarios</h4>
+        <div id="userCount" class="border p-3 bg-light"></div>
+      </div>
+    </div>
+
+    <script>
+      const rest = new ClienteRest();
+
+      // Function to Display Confirmation Messages
+      function mostrarMensaje(mensaje) {
+        $("#message").text(mensaje);
+        setTimeout(() => $("#message").text(""), 3000); // Clear the message after 3 seconds
+      }
+
+      // Function to Add a User
+      function agregarUsuario() {
+        const nick = $("#nickInput").val();
+        if (nick) {
+          rest.agregarUsuario(nick);
+          $("#nickInput").val(""); // Clear the input field
+          mostrarMensaje(`Usuario ${nick} ha sido registrado.`);
+          actualizarUI();
+        } else {
+          alert("Por favor, ingrese un nombre de usuario.");
+        }
+      }
+
+      // Function to Get and Display All Users
+      function obtenerUsuarios() {
+        $.getJSON("/obtenerUsuarios", function (data) {
+          let userListHTML = "";
+
+          // Iterate over the keys of the data object (which are usernames)
+          Object.keys(data).forEach((username) => {
+            userListHTML += `<div>${username}</div>`; // Display each username
+          });
+
+          // Update the HTML content of #userList with the generated list
+          $("#userList").html(userListHTML);
+        }).fail(function () {
+          console.log("Error al obtener usuarios");
+        });
+      }
+
+      function numeroUsuarios() {
+        rest.numeroUsuarios();
+        $.getJSON("/numeroUsuarios", function (data) {
+          $("#userCount").text("Número de usuarios: " + data.num);
+        });
+      }
+
+      // Function to Delete a User
+      function eliminarUsuario() {
+        // Fetch the nickname from the input field
+        const nick = $("#nickInput").val().trim();
+
+        if (nick) {
+          // Call the eliminarUsuario method from ClienteRest with the nickname
+          rest.eliminarUsuario(nick);
+          mostrarMensaje(`Usuario ${nick} ha sido eliminado.`);
+          actualizarUI();
+
+          // Optionally clear the input field after deletion
+          $("#nickInput").val("");
+        } else {
+          mostrarMensaje(
+            "Por favor, ingrese un nombre de usuario para eliminar."
+          );
+        }
+      }
+
+      // Function to Display the Total Number of Users
+
+      // Function to Check if a User is Active
+      function verificarUsuarioActivo(nick) {
+        rest.usuarioActivo(nick);
+        $.getJSON(`/usuarioActivo/${nick}`, function (data) {
+          mostrarMensaje(
+            `Usuario ${nick} está ${data.activo ? "activo" : "inactivo"}.`
+          );
+        });
+      }
+
+      // Function to Update the UI with User List and User Count
+      function actualizarUI() {
+        obtenerUsuarios();
+        numeroUsuarios();
+      }
+
+      // Initialize User List and User Count on Page Load
+      $(document).ready(function () {
+        actualizarUI();
+      });
+    </script>
+
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+  </body>
+</html>
